@@ -3,7 +3,7 @@ require 'tempfile'
 
 class CLI
   def run
-    write_template(entry_path)
+    write_template
 
     Kernel.system("#{editor} \"#{entry_path}\"")
 
@@ -133,8 +133,8 @@ class CLI
     File.open(entry_path, 'w') { |file| file.puts(lines_until_todo_list) }
   end
 
-  def write_template(path)
-    File.open(path, 'w') { |file| file.puts(entry_template) }
+  def write_template
+    File.open(entry_path, 'w') { |file| file.puts(entry_template) }
   end
 end
 
