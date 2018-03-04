@@ -21,6 +21,10 @@ class CLI
     end
   end
 
+  def diary_path
+    @diary_path ||= File.expand_path(fetch_from_env!('DIARY_PATH'))
+  end
+
   def editor
     @editor ||= fetch_from_env!('EDITOR')
   end
@@ -28,9 +32,8 @@ class CLI
   def entry_path
     return @entry_path if @entry_path
 
-    diary_path = fetch_from_env!('DIARY_PATH')
     date_and_time_str = Time.now.strftime('%Y-%m-%d__%H:%M:%S')
-    @entry_path = "#{File.expand_path(diary_path)}/#{date_and_time_str}.md"
+    @entry_path = "#{diary_path}/#{date_and_time_str}.md"
   end
 
   def entry_template
