@@ -9,7 +9,7 @@ class CLI
 
     delete_and_exit_if_empty_entry
 
-    show_random_previous_entry_in_pager
+    show_random_previous_day_in_pager
   end
 
   private
@@ -69,24 +69,60 @@ class CLI
     @pager ||= fetch_from_env!('DIARY_PAGER')
   end
 
-  def show_random_previous_entry_in_pager
-    random_entry_file_name = Dir.children(diary_path).sample
-    random_entry_contents = File.
-      readlines("#{diary_path}/#{random_entry_file_name}")
+  def show_random_previous_day_in_pager
+    diary_file_names = Dir.children(diary_path)
+    entry = Struct.new(:file_name, :entry_text, :todo_text) do
+      def full_entry_path
+        "#{diary_path}/#{file_name}"
+      end
 
-    entry_date_and_time = DateTime.parse(
-      random_entry_file_name.
-        gsub('__', ' ').
-        gsub(/\.md\z/, '')
-    )
-    formatted_date = entry_date_and_time.strftime('%A, %F W%V')
+      def to_date
+        Date.parse(file_name.gsub('__', ' ').gsub(/\.md\z/, ''))
+      end
+
+      def to_datetime
+        DateTime.parse(file_name.gsub('__', ' ').gsub(/\.md\z/, ''))
+      end
+    end
+
+    entries = diary_file_names.map do |file_name|
+      entry_contents = File.readlines(file_name)
+      entry_text = entry_contents.take_while do |line|
+        !line.start_with?('### Done tasks')
+      end.join.chomp
+      todo_text = entry_contents.drop_while do |line|
+        !line.start_with?('### Done tasks')
+      end.drop(2).join.chomp
+
+      entry.new(file_name, entry_text, todo_text)
+    end
+
+    random_day = entries.map(&:to_date).uniq.sample
+    all_entries_from_random_day = entries.select do |entry|
+      entry.to_date == random_day
+    end.sort_by(&:to_datetime)
 
     file = Tempfile.new('diary')
-    file.puts(formatted_date)
+
+    formatted_day = random_day.strftime('%A, %F W%V')
+    file.puts(formatted_day)
+    file.puts('=' * formatted_day.length)
     file.puts
-    file.puts("---")
+
+    all_entries_from_random_day.each do |entry|
+      formatted_time = entry.to_datetime.strftime('%R')
+
+      file.puts(formatted_time)
+      file.puts('-' * formatted_time.length)
+      file.puts
+      file.puts(entry.entry_text)
+      file.puts
+    end
+
+    file.puts('### Done tasks')
     file.puts
-    file.puts(random_entry_contents)
+    file.puts(all_entries_from_random_day.last.todo_text)
+
     file.close
 
     Kernel.system("#{diary_pager} #{file.path}")
