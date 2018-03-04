@@ -1,4 +1,5 @@
 require 'date'
+require 'tempfile'
 
 class CLI
   def run
@@ -8,7 +9,7 @@ class CLI
 
     delete_and_exit_if_empty_entry
 
-    show_random_previous_entry
+    show_random_previous_entry_in_pager
   end
 
   private
@@ -64,7 +65,11 @@ class CLI
     var
   end
 
-  def show_random_previous_entry
+  def diary_pager
+    @pager ||= fetch_from_env!('DIARY_PAGER')
+  end
+
+  def show_random_previous_entry_in_pager
     random_entry_file_name = Dir.children(diary_path).sample
     random_entry_contents = File.
       readlines("#{diary_path}/#{random_entry_file_name}")
@@ -76,11 +81,17 @@ class CLI
     )
     formatted_date = entry_date_and_time.strftime('%A, %F W%V')
 
-    $stdout.puts(formatted_date)
-    $stdout.puts
-    $stdout.puts("---")
-    $stdout.puts
-    $stdout.puts(random_entry_contents)
+    file = Tempfile.new('diary')
+    file.puts(formatted_date)
+    file.puts
+    file.puts("---")
+    file.puts
+    file.puts(random_entry_contents)
+    file.close
+
+    Kernel.system("#{diary_pager} #{file.path}")
+
+    file.delete
   end
 
   def write_template(path)
