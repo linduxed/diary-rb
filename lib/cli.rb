@@ -70,7 +70,11 @@ class CLI
 
   def show_random_previous_day_in_pager
     diary_file_names = Dir.children(diary_path)
-    entry = Struct.new(:file_name, :entry_contents) do
+    entry = Struct.new(:file_name, :diary_path) do
+      def entry_contents
+        File.read(full_entry_path).chomp
+      end
+
       def full_entry_path
         "#{diary_path}/#{file_name}"
       end
@@ -85,9 +89,7 @@ class CLI
     end
 
     entries = diary_file_names.map do |file_name|
-      entry_contents = File.read("#{diary_path}/#{file_name}").chomp
-
-      entry.new(file_name, entry_contents)
+      entry.new(file_name, diary_path)
     end
 
     random_day = entries.map(&:to_date).uniq.sample
