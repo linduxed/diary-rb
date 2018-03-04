@@ -7,6 +7,7 @@ class CLI
 
     Kernel.system("#{editor} \"#{entry_path}\"")
 
+    remove_todo_list_at_bottom
     delete_and_exit_if_empty_entry
 
     show_random_previous_day_in_pager
@@ -15,9 +16,7 @@ class CLI
   private
 
   def delete_and_exit_if_empty_entry
-    entry_contents = File.read(entry_path)
-
-    if entry_contents == entry_template
+    if File.readlines(entry_path).all? { |line| line.match?(/\A\s*\z/) }
       $stdout.puts 'Empty entry: deleting'
       File.delete(entry_path)
       exit 0
@@ -42,7 +41,7 @@ class CLI
   def entry_template
     return @entry_template if @entry_template
 
-    done_todos = Todos.new.done_today
+    done_todos = Todos.new.done_for(Date.today)
     todo_lines = done_todos.map { |todo| "* #{todo}" }.join("\n")
 
     @entry_template = <<~EOF
@@ -71,7 +70,7 @@ class CLI
 
   def show_random_previous_day_in_pager
     diary_file_names = Dir.children(diary_path)
-    entry = Struct.new(:file_name, :entry_text, :todo_text) do
+    entry = Struct.new(:file_name, :entry_contents) do
       def full_entry_path
         "#{diary_path}/#{file_name}"
       end
@@ -86,15 +85,9 @@ class CLI
     end
 
     entries = diary_file_names.map do |file_name|
-      entry_contents = File.readlines("#{diary_path}/#{file_name}")
-      entry_text = entry_contents.take_while do |line|
-        !line.start_with?('### Done tasks')
-      end.join.chomp
-      todo_text = entry_contents.drop_while do |line|
-        !line.start_with?('### Done tasks')
-      end.drop(2).join.chomp
+      entry_contents = File.read("#{diary_path}/#{file_name}").chomp
 
-      entry.new(file_name, entry_text, todo_text)
+      entry.new(file_name, entry_contents)
     end
 
     random_day = entries.map(&:to_date).uniq.sample
@@ -115,19 +108,29 @@ class CLI
       file.puts(formatted_time)
       file.puts('-' * formatted_time.length)
       file.puts
-      file.puts(entry.entry_text)
+      file.puts(entry.entry_contents)
       file.puts
     end
 
     file.puts('### Done tasks')
     file.puts
-    file.puts(all_entries_from_random_day.last.todo_text)
+    Todos.new.done_for(random_day).each do |todo|
+      file.puts("* #{todo}")
+    end
 
     file.close
 
     Kernel.system("#{diary_pager} #{file.path}")
 
     file.delete
+  end
+
+  def remove_todo_list_at_bottom
+    lines_until_todo_list = File.readlines(entry_path).take_while do |line|
+      !line.start_with?('### Done tasks')
+    end.join.chomp
+
+    File.open(entry_path, 'w') { |file| file.puts(lines_until_todo_list) }
   end
 
   def write_template(path)
@@ -142,8 +145,8 @@ class Todos
     end
   end
 
-  def done_today
-    done_todos.select { |todo| todo.date_of_completion == Date.today }
+  def done_for(date)
+    done_todos.select { |todo| todo.date_of_completion == date }
   end
 
   private
