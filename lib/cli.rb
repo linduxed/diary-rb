@@ -86,7 +86,7 @@ class CLI
     end
 
     entries = diary_file_names.map do |file_name|
-      entry_contents = File.readlines(file_name)
+      entry_contents = File.readlines("#{diary_path}/#{file_name}")
       entry_text = entry_contents.take_while do |line|
         !line.start_with?('### Done tasks')
       end.join.chomp
