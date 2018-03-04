@@ -40,7 +40,6 @@ class CLI
     todo_lines = done_todos.map { |todo| "* #{todo}" }.join("\n")
 
     @entry_template = <<~EOF
-      ### Entry
 
 
       ### Done tasks
