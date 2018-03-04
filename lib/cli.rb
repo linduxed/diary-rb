@@ -97,34 +97,34 @@ class CLI
       entry.to_date == random_day
     end.sort_by(&:to_datetime)
 
-    file = Tempfile.new('diary')
+    tempfile = Tempfile.new('diary')
 
     formatted_day = random_day.strftime('%A, %F W%V')
-    file.puts(formatted_day)
-    file.puts('=' * formatted_day.length)
-    file.puts
+    tempfile.puts(formatted_day)
+    tempfile.puts('=' * formatted_day.length)
+    tempfile.puts
 
     all_entries_from_random_day.each do |entry|
       formatted_time = entry.to_datetime.strftime('%R')
 
-      file.puts(formatted_time)
-      file.puts('-' * formatted_time.length)
-      file.puts
-      file.puts(entry.entry_contents)
-      file.puts
+      tempfile.puts(formatted_time)
+      tempfile.puts('-' * formatted_time.length)
+      tempfile.puts
+      tempfile.puts(entry.entry_contents)
+      tempfile.puts
     end
 
-    file.puts('### Done tasks')
-    file.puts
+    tempfile.puts('### Done tasks')
+    tempfile.puts
     Todos.new.done_for(random_day).each do |todo|
-      file.puts("* #{todo}")
+      tempfile.puts("* #{todo}")
     end
 
-    file.close
+    tempfile.close
 
-    Kernel.system("#{diary_pager} #{file.path}")
+    Kernel.system("#{diary_pager} #{tempfile.path}")
 
-    file.delete
+    tempfile.delete
   end
 
   def remove_todo_list_at_bottom
