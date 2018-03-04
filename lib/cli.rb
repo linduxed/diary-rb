@@ -45,9 +45,6 @@ class CLI
       ### Done tasks
 
       #{todo_lines}
-
-      ### Tags
-
     EOF
   end
 
