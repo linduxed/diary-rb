@@ -7,6 +7,8 @@ class CLI
     Kernel.system("#{editor} \"#{entry_path}\"")
 
     delete_and_exit_if_empty_entry
+
+    show_random_previous_entry
   end
 
   private
@@ -60,6 +62,25 @@ class CLI
     end
 
     var
+  end
+
+  def show_random_previous_entry
+    random_entry_file_name = Dir.children(diary_path).sample
+    random_entry_contents = File.
+      readlines("#{diary_path}/#{random_entry_file_name}")
+
+    entry_date_and_time = DateTime.parse(
+      random_entry_file_name.
+        gsub('__', ' ').
+        gsub(/\.md\z/, '')
+    )
+    formatted_date = entry_date_and_time.strftime('%A, %F W%V')
+
+    $stdout.puts(formatted_date)
+    $stdout.puts
+    $stdout.puts("---")
+    $stdout.puts
+    $stdout.puts(random_entry_contents)
   end
 
   def write_template(path)
