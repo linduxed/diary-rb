@@ -26,7 +26,7 @@ class CLI
     return @entry_path if @entry_path
 
     diary_path = fetch_from_env!('DIARY_PATH')
-    date_and_time_str = Time.now.to_s.gsub(' ', '__')
+    date_and_time_str = Time.now.strftime('%Y-%m-%d__%H:%M:%S')
     @entry_path = "#{File.expand_path(diary_path)}/#{date_and_time_str}.md"
   end
 
