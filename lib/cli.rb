@@ -6,17 +6,18 @@ class CLI
 
     Kernel.system("#{editor} \"#{entry_path}\"")
 
-    delete_if_empty_entry
-    exit 0
+    delete_and_exit_if_empty_entry
   end
 
   private
 
-  def delete_if_empty_entry
+  def delete_and_exit_if_empty_entry
     entry_contents = File.read(entry_path)
+
     if entry_contents == entry_template
       $stdout.puts 'Empty entry: deleting'
       File.delete(entry_path)
+      exit 0
     end
   end
 
