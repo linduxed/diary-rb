@@ -1,4 +1,5 @@
 require 'date'
+require 'time'
 require 'tempfile'
 
 class CLI
@@ -34,14 +35,25 @@ class CLI
   def entry_path
     return @entry_path if @entry_path
 
-    date_and_time_str = Time.now.strftime('%Y-%m-%d__%H:%M:%S')
+    date_and_time_str = entry_time.strftime('%Y-%m-%d__%H:%M:%S')
     @entry_path = "#{diary_path}/#{date_and_time_str}.md"
+  end
+
+  def entry_time
+    if ARGV[0] == 'yesterday'
+      full_day_in_seconds = 24*60*60
+      Time.parse('23:00') - full_day_in_seconds
+    elsif ARGV[0]
+      Time.parse(ARGV[0])
+    else
+      Time.now
+    end
   end
 
   def entry_template
     return @entry_template if @entry_template
 
-    done_todos = Todos.new.done_for(Date.today)
+    done_todos = Todos.new.done_for(entry_time.to_date)
     todo_lines = done_todos.map { |todo| "* #{todo}" }.join("\n")
 
     @entry_template = <<~EOF
