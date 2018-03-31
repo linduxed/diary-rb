@@ -104,7 +104,11 @@ class CLI
       entry.new(file_name, diary_path)
     end
 
-    random_day = entries.map(&:to_date).uniq.sample
+    random_day = entries.
+      map(&:to_date).
+      uniq.
+      reject { |date| date == entry_time.to_date }.
+      sample
     all_entries_from_random_day = entries.select do |entry|
       entry.to_date == random_day
     end.sort_by(&:to_datetime)
