@@ -4,14 +4,18 @@ require 'tempfile'
 
 class CLI
   def run
-    write_template
+    if ARGV[0] == 'show' && ARGV[1] == 'random'
+      show_random_previous_day_in_pager
+    else
+      write_template
 
-    Kernel.system("#{editor} \"#{entry_path}\"")
+      Kernel.system("#{editor} \"#{entry_path}\"")
 
-    remove_todo_list_at_bottom
-    delete_and_exit_if_empty_entry
+      remove_todo_list_at_bottom
+      delete_and_exit_if_empty_entry
 
-    show_random_previous_day_in_pager
+      show_random_previous_day_in_pager
+    end
   end
 
   private
@@ -43,7 +47,7 @@ class CLI
     if ARGV[0] == 'yesterday'
       full_day_in_seconds = 24*60*60
       Time.parse('23:00') - full_day_in_seconds
-    elsif ARGV[0]
+    elsif ARGV[0] && ARGV[0] != 'show'
       Time.parse(ARGV[0])
     else
       Time.now
