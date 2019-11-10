@@ -45,7 +45,7 @@ class CLI
 
   def entry_time
     if ARGV[0] == 'yesterday'
-      full_day_in_seconds = 24*60*60
+      full_day_in_seconds = 24 * 60 * 60
       Time.parse('23:00') - full_day_in_seconds
     elsif ARGV[0] && ARGV[0] != 'show'
       Time.parse(ARGV[0])
