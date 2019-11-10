@@ -162,9 +162,9 @@ class CLI
 end
 
 class Todos
-  TODO = Struct.new(:date_of_completion, :text, keyword_init: true) do
+  TODO = Struct.new(:date_of_completion, :project, :tags, :text, keyword_init: true) do
     def to_s
-      text
+      "#{project} [#{tags.join(", ")}] -- #{text}"
     end
   end
 
@@ -184,6 +184,8 @@ class Todos
     done_todos.map do |todo|
       TODO.new(
         date_of_completion: Date.parse(todo["end"]),
+        project: todo["project"],
+        tags: todo["tags"],
         text: todo["description"]
       )
     end
