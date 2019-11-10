@@ -1,6 +1,7 @@
 require 'date'
 require 'time'
 require 'tempfile'
+require 'json'
 
 class CLI
   def run
@@ -174,22 +175,16 @@ class Todos
   private
 
   def done_todos
-    all_todos_output = `todo.sh -p listall`
-    done_todo_lines = all_todos_output.lines(chomp: true).select do |line|
-      line.start_with?(/\d+ x /)
+    all_todos_output = `task export`
+    parsed_todos = JSON.parse(all_todos_output)
+    done_todos = parsed_todos.select do |todo|
+      todo["status"] == "completed"
     end
 
-    done_todo_lines.map do |todo_line|
-      line_without_number_and_completion_char = todo_line.gsub(/\A\d+ x /, '')
-      date_of_completion = line_without_number_and_completion_char.
-        split(' ').first
-
-      todo_without_dates = line_without_number_and_completion_char.
-        gsub(/\A(\d{4}-\d{2}-\d{2} ){2}(\{\d{4}.\d{2}.\d{2}\} )?/, '')
-
+    done_todos.map do |todo|
       TODO.new(
-        date_of_completion: Date.parse(date_of_completion),
-        text: todo_without_dates
+        date_of_completion: Date.parse(todo["end"]),
+        text: todo["description"]
       )
     end
   end
