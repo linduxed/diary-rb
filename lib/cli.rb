@@ -164,7 +164,11 @@ end
 class Todos
   TODO = Struct.new(:date_of_completion, :project, :tags, :text, keyword_init: true) do
     def to_s
-      "#{project} [#{tags.join(", ")}] -- #{text}"
+      if tags == []
+        "#{project} -- #{text}"
+      else
+        "#{project} [#{tags.join(", ")}] -- #{text}"
+      end
     end
   end
 
@@ -182,10 +186,17 @@ class Todos
     end
 
     done_todos.map do |todo|
+      tags =
+        if todo["tags"]
+          todo["tags"]
+        else
+          []
+        end
+
       TODO.new(
         date_of_completion: Date.parse(todo["end"]),
         project: todo["project"],
-        tags: todo["tags"],
+        tags: tags,
         text: todo["description"]
       )
     end
