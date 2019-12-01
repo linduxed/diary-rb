@@ -188,7 +188,7 @@ class Todos
     done_todos.map do |todo|
       tags =
         if todo["tags"]
-          todo["tags"]
+          todo["tags"].sort
         else
           []
         end
