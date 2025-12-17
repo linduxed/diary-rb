@@ -1,54 +1,52 @@
-require 'date'
-require 'time'
-require 'tempfile'
-require 'json'
+require "date"
+require "time"
+require "tempfile"
+require "json"
 
 class CLI
   def run
-    if ARGV[0] == 'show' && ARGV[1] == 'random'
-      show_random_previous_day_in_pager
-    else
+    unless ARGV[0] == "show" && ARGV[1] == "random"
       write_template
 
       Kernel.system("#{editor} \"#{entry_path}\"")
 
       remove_todo_list_at_bottom
       delete_and_exit_if_empty_entry
-
-      show_random_previous_day_in_pager
     end
+
+    show_random_previous_day_in_pager
   end
 
   private
 
   def delete_and_exit_if_empty_entry
-    if File.readlines(entry_path).all? { |line| line.match?(/\A\s*\z/) }
-      $stdout.puts 'Empty entry: deleting'
-      File.delete(entry_path)
-      exit 0
-    end
+    return unless File.readlines(entry_path).all? { |line| line.match?(/\A\s*\z/) }
+
+    $stdout.puts "Empty entry: deleting"
+    File.delete(entry_path)
+    exit 0
   end
 
   def diary_path
-    @diary_path ||= File.expand_path(fetch_from_env!('DIARY_PATH'))
+    @diary_path ||= File.expand_path(fetch_from_env!("DIARY_PATH"))
   end
 
   def editor
-    @editor ||= fetch_from_env!('EDITOR')
+    @editor ||= fetch_from_env!("EDITOR")
   end
 
   def entry_path
     return @entry_path if @entry_path
 
-    date_and_time_str = entry_time.strftime('%Y-%m-%d__%H:%M:%S')
+    date_and_time_str = entry_time.strftime("%Y-%m-%d__%H:%M:%S")
     @entry_path = "#{diary_path}/#{date_and_time_str}.md"
   end
 
   def entry_time
-    if ARGV[0] == 'yesterday'
+    if ARGV[0] == "yesterday"
       full_day_in_seconds = 24 * 60 * 60
-      Time.parse('23:00') - full_day_in_seconds
-    elsif ARGV[0] && ARGV[0] != 'show'
+      Time.parse("23:00") - full_day_in_seconds
+    elsif ARGV[0] && ARGV[0] != "show"
       Time.parse(ARGV[0])
     else
       Time.now
@@ -82,7 +80,7 @@ class CLI
   end
 
   def diary_pager
-    @pager ||= fetch_from_env!('DIARY_PAGER')
+    @pager ||= fetch_from_env!("DIARY_PAGER")
   end
 
   def show_random_previous_day_in_pager
@@ -97,11 +95,11 @@ class CLI
       end
 
       def to_date
-        Date.parse(file_name.gsub('__', ' ').gsub(/\.md\z/, ''))
+        Date.parse(file_name.gsub("__", " ").gsub(/\.md\z/, ""))
       end
 
       def to_datetime
-        DateTime.parse(file_name.gsub('__', ' ').gsub(/\.md\z/, ''))
+        DateTime.parse(file_name.gsub("__", " ").gsub(/\.md\z/, ""))
       end
     end
 
@@ -109,33 +107,33 @@ class CLI
       entry.new(file_name, diary_path)
     end
 
-    random_day = entries.
-      map(&:to_date).
-      uniq.
-      reject { |date| date == entry_time.to_date }.
-      sample
+    random_day = entries
+      .map(&:to_date)
+      .uniq
+      .reject { |date| date == entry_time.to_date }
+      .sample
     all_entries_from_random_day = entries.select do |entry|
       entry.to_date == random_day
     end.sort_by(&:to_datetime)
 
-    tempfile = Tempfile.new('diary')
+    tempfile = Tempfile.new("diary")
 
-    formatted_day = random_day.strftime('%A, %F W%V')
+    formatted_day = random_day.strftime("%A, %F W%V")
     tempfile.puts(formatted_day)
-    tempfile.puts('=' * formatted_day.length)
+    tempfile.puts("=" * formatted_day.length)
     tempfile.puts
 
     all_entries_from_random_day.each do |entry|
-      formatted_time = entry.to_datetime.strftime('%R')
+      formatted_time = entry.to_datetime.strftime("%R")
 
       tempfile.puts(formatted_time)
-      tempfile.puts('-' * formatted_time.length)
+      tempfile.puts("-" * formatted_time.length)
       tempfile.puts
       tempfile.puts(entry.entry_contents)
       tempfile.puts
     end
 
-    tempfile.puts('### Done tasks')
+    tempfile.puts("### Done tasks")
     tempfile.puts
     Todos.new.done_for(random_day).each do |todo|
       tempfile.puts("* #{todo}")
@@ -150,14 +148,14 @@ class CLI
 
   def remove_todo_list_at_bottom
     lines_until_todo_list = File.readlines(entry_path).take_while do |line|
-      !line.start_with?('### Done tasks')
+      !line.start_with?("### Done tasks")
     end.join.chomp
 
-    File.open(entry_path, 'w') { |file| file.puts(lines_until_todo_list) }
+    File.open(entry_path, "w") { |file| file.puts(lines_until_todo_list) }
   end
 
   def write_template
-    File.open(entry_path, 'w') { |file| file.puts(entry_template) }
+    File.open(entry_path, "w") { |file| file.puts(entry_template) }
   end
 end
 
